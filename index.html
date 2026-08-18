@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="chat.css">
-<title>チャット実験</title>
+<title>チャット体験</title>
 </head>
 
 <body>
@@ -63,8 +63,8 @@
 </div>
 
 <div id="screen4" class="screen">
-<h2>チャットは以上で終了です。<br>下の「質問フォームへ」ボタンを押し、フォームに回答してください</h2>
-<p><a id="formLink" href="#">質問フォームへ</a></p>
+<h2>チャットは以上で終了です。</h2>
+<p>ご参加ありがとうございました。</p>
 </div>
 
 </div>
@@ -75,16 +75,11 @@ let userName = "";
 let partnerName = "";
 let firstChoice = null;
 let secondChoice = null;
-let chatStartTime = null;
-let chatEndTime = null;
 let participantChoice = null;
 let isFinal = false;
 let questionsAnswered = { first: false, second: false };
 
-const participantId = "P" + Date.now() + Math.floor(Math.random()*1000);
-
-const conditionNumber =
-  parseInt(participantId.replace("P","")) % 4;
+const conditionNumber = Math.floor(Math.random() * 4);
 
 let condition;
 
@@ -199,7 +194,6 @@ function partnerReply(text, callback = null){
 }
 
 function startChat(){
-  chatStartTime = new Date().toISOString();
   userName = document.getElementById('name').value;
   const gender = document.getElementById('gender').value;
   if(!userName){ alert("名前を入力してください"); return; }
@@ -388,64 +382,9 @@ function selectFinal(choice){
   document.getElementById('resultBlock').style.display = 'block';
 }
   
-// --- ここからログ保存＋フォーム連携 ---
-async function saveChatLog(){
-  const chatMsgs = [...document.querySelectorAll('#chat .msg')].map(d=>({
-    text: d.innerText,
-    cls: d.className
-  }));
-
-  const durationSec =
-    chatStartTime && chatEndTime
-      ? Math.round(
-          (new Date(chatEndTime) - new Date(chatStartTime))
-          / 1000
-        )
-      : null;
-
-  const logData = {
-    participantId,
-    chatStartTime,
-    chatEndTime,
-    durationSec,
-    participantChoice,
-    condition: { 
-      liking: condition.liking === 'high' ? 1 : 0, 
-      certainty: condition.certainty === 'certain' ? 1 : 0 
-    },
-    chat: chatMsgs
-  };
-
-  try{
-    await fetch("https://script.google.com/macros/s/AKfycbzh-n3xPsAUggnXrqVCJbkQzZBbR4_eceqgR9VWlXlw-es4_PfOheON2bJffU6a3MTG/exec", {
-      method: "POST",
-      body: JSON.stringify(logData),
-      mode: "no-cors"
-    });
-
-    // GASはURL返さないのでダミー
-    return "saved";
-  }catch(e){
-    console.error("ログ保存失敗:", e);
-    return "";
-  }
-}
-
-async function goToForm(){
+function goToForm(){
   next(4);
-
-  const logUrl = await saveChatLog(); // 自動保存してURL取得
-  const likingCode = condition.liking === 'high' ? 1 : 0;
-  const certaintyCode = condition.certainty === 'certain' ? 1 : 0;
-
-  // GoogleフォームURLに participantId, 条件, ログURL を渡す
-  const url = `https://docs.google.com/forms/d/e/1FAIpQLScU0aHR0LlC2TCniUz0ZhXG-ULv-AXwBzvXxuTjb34hJa6mNQ/viewform?usp=pp_url` +
-              `&entry.1787887357=${participantId}` +
-              `&entry.2146909032=${encodeURIComponent(logUrl)}` +
-              `&entry.186622541=${likingCode}` +
-              `&entry.249003931=${certaintyCode}`;
-  document.getElementById('formLink').href = url;
-}             
+}
 </script>
 </body>
 </html>
